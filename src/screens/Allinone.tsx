@@ -16,7 +16,7 @@ import all from '../images/all.png';
 import {FlatList} from 'react-native-gesture-handler';
 import {useNavigation} from '@react-navigation/native';
 import {addItem} from '../app/cartSlice';
-import {useDispatch} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import Toast from 'react-native-toast-message';
 
 const Allinone = () => {
@@ -91,11 +91,19 @@ const Allinone = () => {
       pcs: '7pcs, Priceg',
     },
   ];
+  const cartItems = useSelector(state => state.cart.items);
   const handleAddToCart = product => {
-    dispatch(addItem(product));
+    const existingProduct = cartItems.find(item => item.id === product.id);
+    const updatedProduct = {
+      ...product,
+      quantity: existingProduct ? existingProduct.quantity + 1 : 1,
+    };
+
+    dispatch(addItem(updatedProduct));
     Toast.show({
       type: 'success',
-      text1: 'Item added to cart',
+      text1: `Item added to cart`,
+      text1Style: {fontSize: 15, fontWeight: 'bold'},
     });
   };
   return (
@@ -114,17 +122,19 @@ const Allinone = () => {
         keyExtractor={item => item.id.toString()}
         renderItem={({item}) => (
           <View style={styles.allPros}>
-            <View style={styles.products}>
-              <TouchableOpacity onPress={() => ProductDetails(item)}>
-                <Image source={item.image} style={styles.productImg} />
-                <Text style={styles.fruitTitle}>{item.name}</Text>
-                <Text style={styles.pcs}>{item.pcs}</Text>
-              </TouchableOpacity>
-              <View style={styles.priceAll}>
-                <Text style={styles.priceTxt}>$ {item.price}</Text>
-                <TouchableOpacity onPress={() => handleAddToCart(item)}>
-                  <Image source={plus} style={styles.plusIcon} />
+            <View style={styles.newPros}>
+              <View style={styles.products}>
+                <TouchableOpacity onPress={() => ProductDetails(item)}>
+                  <Image source={item.image} style={styles.productImg} />
+                  <Text style={styles.fruitTitle}>{item.name}</Text>
+                  <Text style={styles.pcs}>{item.pcs}</Text>
                 </TouchableOpacity>
+                <View style={styles.priceAll}>
+                  <Text style={styles.priceTxt}>${item.price}</Text>
+                  <TouchableOpacity onPress={() => handleAddToCart(item)}>
+                    <Image source={plus} style={styles.plusIcon} />
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           </View>
@@ -144,7 +154,7 @@ const styles = StyleSheet.create({
   plusIcon: {
     height: 38,
     width: 38,
-    marginLeft: 5,
+    marginLeft: 33,
   },
   allPros: {
     marginTop: 15,
@@ -166,27 +176,29 @@ const styles = StyleSheet.create({
   arrow: {
     marginLeft: 23,
   },
-
   pcs: {
     color: '#7C7C7C',
     fontSize: 12,
-    marginTop: 1,
-    marginLeft: 10,
+    marginTop: 2,
   },
   fruitTitle: {
     fontWeight: '700',
     marginTop: 15,
-    marginLeft: 10,
+    marginHorizontal: 1,
   },
   priceTxt: {
     fontWeight: 800,
     fontSize: 16,
   },
   productImg: {
-    height: 90,
-    width: 45,
+    height: 100,
+    width: 120,
     marginTop: 14,
     alignSelf: 'center',
+    resizeMode: 'contain',
+  },
+  newPros: {
+    marginBottom: 5,
   },
   title: {
     fontFamily: 'Gilroy-Bold',
@@ -201,7 +213,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderRadius: 18,
     padding: 10,
-    height: 230,
+    height: 240,
     width: 180,
     marginLeft: 20,
   },
@@ -210,6 +222,5 @@ const styles = StyleSheet.create({
     gap: 40,
     alignItems: 'center',
     marginTop: 10,
-    marginLeft: 10,
   },
 });

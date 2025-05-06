@@ -6,75 +6,70 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React from 'react';
 import line from '../images/Line.png';
-import {useDispatch, useSelector} from 'react-redux';
-import {addMultipleItems} from '../app/cartSlice';
 import arrow from '../images/newRarrow.png';
-import {useNavigation} from '@react-navigation/native';
+import {useDispatch, useSelector} from 'react-redux';
+import {removeFavourite, addMultipleItems} from '../app/cartSlice';
+import Toast from 'react-native-toast-message';
+import Button from '../component/Button';
 
 const ItemsList = () => {
-  const favourites = useSelector(state => state.cart.favourites);  // Get favourites from the Redux store
-  const cartItems = useSelector(state => state.cart.items);        // Get items in the cart from Redux store
+  const favourites = useSelector(state => state.cart.favourites);
   const dispatch = useDispatch();
-  const navigation = useNavigation();
 
-  // Navigate to Product Details page
-  const ProductDetails = product => {
-    navigation.navigate('ProductDetails', {product});
-  };
-
-  // Function to handle the "Add All to Cart" action
   const handleAddAllToCart = () => {
-    dispatch(addMultipleItems(favourites));  // Dispatch action to add all favourites to the cart
+    dispatch(addMultipleItems(favourites));
+    favourites.forEach(item => dispatch(removeFavourite(item.id)));
+    Toast.show({
+      type: 'success',
+      text1: 'All items added to cart',
+      text1Style: {fontSize: 15, fontWeight: 'bold'},
+    });
   };
-
-  // Calculate total items in the cart (sum of quantities)
-  const totalItemsInCart = cartItems.reduce((total, item) => total + item.quantity, 0);
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Favourite</Text>
       <Image source={line} style={styles.lineImg} />
 
-      {/* FlatList to render favourites */}
-      <FlatList
-        data={favourites}
-        keyExtractor={item => item?.id.toString()}
-        renderItem={({item}) => (
-          <View>
-            <TouchableOpacity onPress={() => ProductDetails(item)}>
-              <View style={styles.alltitle}>
-                <Image style={styles.pImage} source={item.image} />
-                <View style={styles.allThings}>
-                  <View style={styles.newMain}>
-                    <View style={styles.newCss}>
-                      <Text style={styles.itemName}>{item.name}</Text>
-                      <Text style={styles.itemPcs}>{item.pcs}</Text>
+      {favourites.length === 0 ? (
+        <Text style={styles.noItemsText}>No items added</Text>
+      ) : (
+        <FlatList
+          data={favourites}
+          keyExtractor={item => item?.id.toString()}
+          renderItem={({item}) => (
+            <View>
+              <TouchableOpacity
+                onPress={() => dispatch(removeFavourite(item.id))}>
+                <View style={styles.alltitle}>
+                  <Image style={styles.pImage} source={item.image} />
+                  <View style={styles.allThings}>
+                    <View style={styles.newMain}>
+                      <View style={styles.newCss}>
+                        <Text style={styles.itemName}>{item.name}</Text>
+                        <Text style={styles.itemPcs}>{item.pcs}</Text>
+                      </View>
                     </View>
                   </View>
+                  <View style={styles.allend}>
+                    <Text style={styles.price}>${item.price}</Text>
+                    <Image source={arrow} style={styles.cancel} />
+                  </View>
                 </View>
-                <View style={styles.allend}>
-                  <Text style={styles.price}>${item.price}</Text>
-                  <Image source={arrow} style={styles.cancel} />
-                </View>
-              </View>
-            </TouchableOpacity>
-            <Image source={line} style={styles.line} />
-          </View>
-        )}
-      />
+              </TouchableOpacity>
+              <Image source={line} style={styles.line} />
+            </View>
+          )}
+        />
+      )}
 
-      {/* Button to add all favourites to cart */}
-      <TouchableOpacity
-        style={styles.btnBg}
-        onPress={handleAddAllToCart}>
-        <Text style={styles.btn}>Add All to Cart</Text>
-      </TouchableOpacity>
-
-      {/* Display total item count in cart */}
-      <View style={styles.cartCounterContainer}>
-        <Text style={styles.cartCounterText}>Items in cart: {totalItemsInCart}</Text>
+      <View style={styles.btnnew}>
+        <Button
+          title="Add All to Cart"
+          onPress={handleAddAllToCart}
+          disabled={favourites.length === 0}
+        />
       </View>
     </View>
   );
@@ -86,6 +81,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'white',
+  },
+  btnnew: {
+    position: 'absolute',
+    marginVertical: 730,
+    marginHorizontal: 30,
+  },
+  newCssBtn: {
+    position: 'absolute',
+    marginVertical: 760,
+    marginHorizontal: 30,
   },
   title: {
     textAlign: 'center',
@@ -108,7 +113,7 @@ const styles = StyleSheet.create({
   },
   pImage: {
     height: 60,
-    width: 50,
+    width: 80,
     marginRight: 15,
     marginLeft: 15,
     resizeMode: 'contain',
@@ -156,7 +161,6 @@ const styles = StyleSheet.create({
     marginRight: 5,
   },
   line: {
-    marginTop: 10,
     alignSelf: 'center',
     width: 370,
   },
@@ -168,21 +172,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 20,
     alignSelf: 'center',
-    marginBottom: 20,
   },
   btn: {
     fontSize: 18,
     color: 'white',
     fontWeight: '600',
   },
-
-  cartCounterContainer: {
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  cartCounterText: {
+  noItemsText: {
+    textAlign: 'center',
+    color: '#7C7C7C',
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#181725',
+    marginVertical: 300,
   },
 });

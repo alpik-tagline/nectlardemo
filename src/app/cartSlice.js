@@ -1,4 +1,4 @@
-import { createSlice } from '@reduxjs/toolkit';
+import {createSlice} from '@reduxjs/toolkit';
 
 const cartSlice = createSlice({
   name: 'cart',
@@ -27,6 +27,12 @@ const cartSlice = createSlice({
       }
     },
 
+    removeFavourite: (state, action) => {
+      state.favourites = state.favourites.filter(
+        item => item.id !== action.payload,
+      );
+    },
+
     increaseQuantity: (state, action) => {
       const item = state.items.find(item => item.id === action.payload);
       if (item) {
@@ -45,24 +51,25 @@ const cartSlice = createSlice({
       state.items = state.items.filter(item => item.id !== action.payload);
     },
 
-    removeFavourite: (state, action) => {
-      state.favourites = state.favourites.filter(
-        item => item.id !== action.payload,
-      );
-    },
-
-    // Adding the addMultipleItems action to add multiple products to the cart
     addMultipleItems: (state, action) => {
-      // Use a Set to avoid duplicates based on item.id
-      const newItems = action.payload;
-      newItems.forEach(item => {
-        const existingItem = state.items.find(p => p.id === item.id);
+      const itemsToAdd = action.payload;
+
+      itemsToAdd.forEach(item => {
+        const existingItem = state.items.find(i => i.id === item.id);
+
         if (existingItem) {
-          existingItem.quantity += item.quantity;
+          existingItem.quantity += 1;
         } else {
-          state.items.push(item);
+          state.items.push({
+            ...item,
+            quantity: 1,
+          });
         }
       });
+    },
+
+    clearCart: state => {
+      state.items = [];
     },
   },
 });
@@ -74,7 +81,8 @@ export const {
   removeItem,
   favourite,
   removeFavourite,
-  addMultipleItems, // Export the new action
+  addMultipleItems,
+  clearCart,
 } = cartSlice.actions;
 
 export default cartSlice.reducer;

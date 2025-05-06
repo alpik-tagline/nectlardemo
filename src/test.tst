@@ -1,297 +1,413 @@
 import {
-  Alert,
+  FlatList,
   Image,
-  ImageBackground,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useState} from 'react';
-import bg from '../images/productbg.png';
-import heart from '../images/heart.png';
-import minus from '../images/normalMinus.png';
-import plus from '../images/normalPlus.png';
-import round from '../images/round.png';
-import line from '../images/proline.png';
-import downarrow from '../images/downnew.png';
-import rightArrow from '../images/rightArrow.png';
-import stars from '../images/stars.png';
+import React, {useRef} from 'react';
+import line from '../images/Line.png';
 import {useDispatch, useSelector} from 'react-redux';
+import minus from '../images/minus.png';
+import plus from '../images/greenplus.png';
 import {
   increaseQuantity,
   decreaseQuantity,
-  addItem,
-  favourite,
+  removeItem,
+  clearCart,
 } from '../app/cartSlice';
+import cancel from '../images/cancel.png';
+import RBSheet from 'react-native-raw-bottom-sheet';
+import cancelB from '../images/blackCancel.png';
+import smallL from '../images/smallLine.png';
+import arrow from '../images/arrow.png';
+import card from '../images/card.png';
+import {useNavigation} from '@react-navigation/native';
+import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
+import Button from '../component/Button';
 
-const ProductDetails = ({route}) => {
+const ItemsList = () => {
+  const cartItems = useSelector(state => state.cart.items);
+  const refRBSheet = useRef();
   const dispatch = useDispatch();
-  const {product} = route.params;
-  const cartItem = useSelector(state =>
-    state.cart.items.find(item => item.id === product.id),
-  );
-  const favourites = useSelector(state => state.cart.favourites);
-  const isFavourited = favourites.some(fav => fav.id === product.id);
+  const navigation = useNavigation();
 
-  const toggleFavourite = () => {
-    if (isFavourited) {
-      dispatch(removeFavourite(product.id));
-    } else {
-      dispatch(favourite(product));
+  const calculateTotal = () => {
+    return cartItems.reduce(
+      (total, item) => total + item.price * item.quantity,
+      0,
+    );
+  };
+
+  const total = calculateTotal();
+
+  const handlePlaceOrder = async () => {
+    try {
+      const user = auth().currentUser;
+      if (!user) {
+        console.error('No user is logged in');
+        return;
+      }
+
+      const order = {
+        items: cartItems,
+        total: total,
+        email: user.email,
+        createdAt: firestore.FieldValue.serverTimestamp(),
+      };
+
+      await firestore()
+        .collection('orders')
+        .doc(user.email)
+        .collection('userOrders')
+        .add(order);
+      dispatch(clearCart());
+      navigation.navigate('OrderCon');
+    } catch (error) {
+      console.error('Error placing order: ', error);
     }
   };
 
-    const image1 = require('../images/heart.png');
-  const image2 = require('../images/newhh.png');
-
-  const handleAddToCart = product => {
-    dispatch(addItem(product));
+  const ProductDetails = product => {
+    navigation.navigate('ProductDetails', {product});
   };
-
-  const quantity = cartItem ? cartItem.quantity : 0;
-  const totalPrice = (product.price * quantity).toFixed(2);
 
   return (
     <View style={styles.container}>
-      <View style={styles.images}>
-        <Image source={bg} />
-        <Image source={product.image} style={styles.proimage} />
-      </View>
-      <View style={styles.titleImage}>
-        <Text style={styles.productTitle}>{product.name}</Text>
-        <TouchableOpacity onPress={toggleFavourite}>
-          <Image
-            source={isFavourited ? image2 : image1}
-            style={styles.heartImg}
-          />
-        </TouchableOpacity>
-      </View>
-      <Text style={styles.productsPcs}>{product.pcs}</Text>
+      <Text style={styles.title}>My Cart</Text>
+      <Image source={line} style={styles.lineImg} />
 
-      <View style={styles.plusMinus}>
-        <TouchableOpacity
-          onPress={() => {
-            if (cartItem) {
-              dispatch(decreaseQuantity(product.id));
-            }
-          }}>
-          <Image source={minus} style={styles.minusPro} />
-        </TouchableOpacity>
-        <View style={styles.counts}>
-          <Text style={styles.quantity}>{quantity}</Text>
+      {cartItems.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>
+            Your cart is empty add Product First
+          </Text>
         </View>
+      ) : (
+        <FlatList
+          data={cartItems}
+          keyExtractor={item => item?.id.toString()}
+          renderItem={({item}) => (
+            <View>
+              <View style={styles.alltitle}>
+                <TouchableOpacity onPress={() => ProductDetails(item)}>
+                  <Image style={styles.pImage} source={item.image} />
+                </TouchableOpacity>
+                <View style={styles.allThings}>
+                  <View style={styles.newCss}>
+                    <View style={styles.allNew}>
+                      <TouchableOpacity onPress={() => ProductDetails(item)}>
+                        <Text style={styles.itemName}>{item.name}</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => dispatch(removeItem(item.id))}>
+                        <Image source={cancel} style={styles.cancel} />
+                      </TouchableOpacity>
+                    </View>
+                    <Text style={styles.itemPcs}>{item.pcs}</Text>
+                  </View>
 
-        <TouchableOpacity
+                  <View style={styles.plusMinus}>
+                    <TouchableOpacity
+                      onPress={() => dispatch(decreaseQuantity(item.id))}>
+                      <Image source={minus} style={styles.minusPro} />
+                    </TouchableOpacity>
+                    <View style={styles.counts}>
+                      <Text style={styles.quantity}>{item.quantity}</Text>
+                    </View>
+
+                    <TouchableOpacity
+                      onPress={() => dispatch(increaseQuantity(item.id))}>
+                      <Image source={plus} style={styles.plusPro} />
+                    </TouchableOpacity>
+
+                    <Text style={styles.price}>
+                      ${(item.price * item.quantity).toFixed(2)}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+              <Image source={line} style={styles.line} />
+            </View>
+          )}
+        />
+      )}
+
+      <View style={styles.newcheck}>
+        <Button
+          title="Go to Checkout"
           onPress={() => {
-            if (!cartItem) {
-              dispatch(addItem(product));
-            } else {
-              dispatch(increaseQuantity(product.id));
+            if (cartItems.length > 0) {
+              refRBSheet.current.open();
             }
-          }}>
-          <Image source={plus} style={styles.plusPro} />
-        </TouchableOpacity>
-
-        <Text style={styles.price}>${totalPrice}</Text>
+          }}
+          disabled={cartItems.length === 0}
+          rightComponent={
+            <Text style={{color: cartItems.length === 0 ? 'gray' : 'white'}}>
+              ${total.toFixed(2)}
+            </Text>
+          }
+        />
       </View>
 
-      <View style={styles.lineBg}>
-        <Image source={line} style={styles.line} />
-      </View>
-      <View style={styles.proDetails}>
-        <Text style={styles.proDetailsOne}>Product Detail</Text>
-        <Image source={downarrow} style={styles.downArr} />
-      </View>
-      <View style={styles.newDesc}>
-        <Text style={styles.newstyle}>
-          Lorem, ipsum dolor sit amet consectetur adipisicing elit. Eum atque
-          numquam sequi possimus id natus voluptates recusandae aliquam ma.
-        </Text>
-      </View>
-      <View style={styles.lineBg}>
-        <Image source={line} style={styles.line} />
-      </View>
-      <View style={styles.proDetailsNew}>
-        <Text style={styles.proDetailsN}>Nutritions</Text>
-        <Text style={styles.grams}>100gr</Text>
-        <Image source={rightArrow} style={styles.rightArr} />
-      </View>
-      <View style={styles.lineBg}>
-        <Image source={line} style={styles.line} />
-      </View>
-      <View style={styles.proDetailsNewOne}>
-        <Text style={styles.proDetailsN}>Review</Text>
-        <Image source={stars} style={styles.startsReview} />
-        <Image source={rightArrow} style={styles.rightArr} />
-      </View>
-      <TouchableOpacity style={styles.btnBg} onPress={() => handleAddToCart}>
-        <Text style={styles.btn}>Add To Basket</Text>
-      </TouchableOpacity>
+      <RBSheet
+        ref={refRBSheet}
+        closeOnDragDown={true}
+        closeOnPressMask={false}
+        customStyles={{
+          wrapper: {
+            backgroundColor: 'rgba(0,0,0,0.5)',
+          },
+          draggableIcon: {
+            backgroundColor: '#ccc',
+          },
+          container: {
+            borderTopLeftRadius: 25,
+            borderTopRightRadius: 25,
+            padding: 20,
+            height: 500,
+          },
+        }}>
+        <View>
+          <View style={styles.uptext}>
+            <Text style={styles.checkout}>Checkout</Text>
+            <TouchableOpacity onPress={() => refRBSheet.current.close()}>
+              <Image source={cancelB} style={styles.cancelImg} />
+            </TouchableOpacity>
+          </View>
+          <Image source={smallL} style={styles.Sline} />
+          <View style={styles.adjust}>
+            <Text style={styles.descTxt}>Delivery</Text>
+            <Text style={styles.selectM}>Select Method </Text>
+            <Image source={arrow} style={styles.arrowL} />
+          </View>
+          <Image source={smallL} style={styles.Sline} />
+          <View style={styles.adjust}>
+            <Text style={styles.descTxt}>Payment</Text>
+            <Image source={card} style={styles.card} />
+            <Image source={arrow} style={styles.arrowL} />
+          </View>
+          <Image source={smallL} style={styles.Sline} />
+          <View style={styles.adjust}>
+            <Text style={styles.descTxt}>Promo Code</Text>
+            <Text style={styles.discount}>Pick discount </Text>
+            <Image source={arrow} style={styles.arrowL} />
+          </View>
+          <Image source={smallL} style={styles.Sline} />
+          <View style={styles.adjust}>
+            <Text style={styles.descTxt}>Total Cost</Text>
+            <Text style={styles.priceTotal}>${total.toFixed(2)} </Text>
+            <Image source={arrow} style={styles.arrowL} />
+          </View>
+          <Image source={smallL} style={styles.Sline} />
+          <Text style={styles.descnew}>
+            By placing an order you agree to our
+          </Text>
+          <Text style={styles.descne}>
+            <Text style={styles.ts}>Terms</Text> And
+            <Text style={styles.ts}> Conditions</Text>
+          </Text>
+          <View style={styles.newbtn}>
+            <TouchableOpacity style={styles.btnBg} onPress={handlePlaceOrder}>
+              <Text style={styles.btn}>Place Order</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </RBSheet>
     </View>
   );
 };
 
-export default ProductDetails;
+export default ItemsList;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'white',
   },
-  newstyle: {
-    fontFamily: 'Gilroy-Medium',
+  emptyContainer: {
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
     color: '#7C7C7C',
+    position: 'absolute',
+    marginVertical: 300,
+  },
+  newcheck: {
+    marginVertical: 625,
+  },
+  ts: {
+    color: 'black',
+  },
+  plusPro: {
+    height: 47,
+  },
+  minusPro: {
+    height: 47,
   },
   counts: {
-    borderRadius: 15,
-    borderColor: '#E2E2E2',
-    borderWidth: 1,
-    height: 44,
-    width: 42,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 15,
-    marginRight: 15,
-  },
-  images: {
-    alignItems: 'center',
-  },
-  proimage: {
-    position: 'absolute',
-    height: 200,
-    width: 90,
-    marginTop: 90,
-  },
-  newh: {
-    marginTop: 5,
-  },
-  productTitle: {
-    fontFamily: 'Gilroy-Bold',
-    fontWeight: '900',
-    fontSize: 22,
-    flex: 1,
-    marginRight: 10,
-  },
-  productsPcs: {
-    fontFamily: 'Gilroy',
-    fontWeight: '700',
-    color: '#7C7C7C',
-    marginLeft: 20,
-    marginTop: 2,
-    fontSize: 14,
-  },
-  titleImage: {
-    marginTop: 20,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
+    width: 40,
   },
   plusMinus: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 20,
   },
-  quantity: {
-    fontFamily: 'Gilroy',
-    fontWeight: '700',
-    fontSize: 16,
-    color: 'black',
-  },
-  price: {
-    fontFamily: 'Gilroy',
-    fontWeight: '100',
-    fontSize: 23,
-    marginLeft: 200,
-  },
-  roundImage: {
-    marginRight: 40,
-  },
-  heartImg: {
-    width: 24,
-    height: 24,
-  },
-  minusPro: {
-    marginLeft: 25,
-  },
-  plusPro: {
-    height: 18,
-  },
-  line: {
-    marginTop: 30,
-  },
-  lineBg: {
-    alignItems: 'center',
-  },
-  proDetails: {
-    marginTop: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: 30,
-    gap: 240,
-  },
-  proDetailsOne: {
-    fontFamily: 'Gilroy',
-    fontWeight: '700',
-    fontSize: 15,
-  },
-  newDesc: {
-    marginTop: 10,
-    marginLeft: 30,
-  },
-  proDetailsNew: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 28,
-    fontSize: 15,
-  },
-  proDetailsN: {
-    fontFamily: 'Gilroy',
-    fontWeight: '700',
-    position: 'absolute',
-    paddingLeft: 30,
-    fontSize: 15,
-  },
-  grams: {
-    position: 'absolute',
-    marginLeft: 310,
-    backgroundColor: '#EBEBEB',
-    borderRadius: 5,
-    height: 20,
-    width: 40,
-    fontSize: 12,
-    textAlign: 'center',
-  },
-  rightArr: {
-    position: 'absolute',
-    marginLeft: 360,
-    marginTop: 2,
-  },
-  startsReview: {
-    marginLeft: 250,
-    marginTop: 2,
-  },
-  proDetailsNewOne: {
-    marginTop: 10,
-  },
-  btnBg: {
-    backgroundColor: '#53B175',
-    marginTop: 50,
-    height: 67,
-    width: 353,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 30,
-    borderTopEndRadius: 20,
-    borderBottomEndRadius: 20,
-    borderBottomLeftRadius: 20,
-    borderTopLeftRadius: 20,
+  newbtn: {
+    marginTop: 18,
   },
   btn: {
     fontSize: 18,
     color: 'white',
     fontWeight: '600',
+    textAlign: 'center',
+  },
+  btnBg: {
+    backgroundColor: '#53B175',
+    height: 60,
+    width: 353,
+    justifyContent: 'center',
+    borderRadius: 20,
+    alignSelf: 'center',
+    marginBottom: 20,
+  },
+  card: {
+    marginLeft: 250,
+    marginRight: 4,
+  },
+  checkout: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  uptext: {
+    marginTop: 10,
+    flexDirection: 'row',
+  },
+  descTxt: {
+    color: '#7C7C7C',
+    fontWeight: '700',
+    fontSize: 17,
+    fontFamily: 'Gilroy',
+  },
+  descnew: {
+    color: '#7C7C7C',
+    marginTop: 10,
+    fontFamily: 'Gilroy',
+    fontWeight: '600',
+  },
+  descne: {
+    color: '#7C7C7C',
+    marginTop: 3,
+  },
+  allNew: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  priceTotal: {
+    paddingLeft: 202,
+    fontSize: 17,
+    fontFamily: 'Gilroy',
+    fontWeight: '700',
+  },
+  arrowL: {
+    height: 15,
+    marginLeft: 10,
+  },
+  adjust: {
+    flexDirection: 'row',
+    alignContent: 'center',
+    alignItems: 'center',
+    marginTop: 15,
+  },
+  discount: {
+    fontSize: 17,
+    fontFamily: 'Gilroy',
+    fontWeight: '700',
+    paddingLeft: 120,
+    marginLeft: 20,
+  },
+  selectM: {
+    fontSize: 17,
+    fontFamily: 'Gilroy',
+    fontWeight: '700',
+    paddingLeft: 150,
+    marginLeft: 20,
+  },
+  newCss: {
+    marginTop: 10,
+    marginLeft: 10,
+  },
+  Sline: {
+    marginTop: 30,
+    width: '100%',
+  },
+  cancelImg: {
+    marginTop: 5,
+    marginHorizontal: 263,
+  },
+  alltitle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 30,
+  },
+  cancel: {
+    height: 15,
+    width: 15,
+    position: 'absolute',
+  },
+  price: {
+    fontFamily: 'Gilroy',
+    fontWeight: '100',
+    fontSize: 23,
+    marginLeft: 90,
+  },
+  itemName: {
+    fontFamily: 'Gilroy-Bold',
+    fontSize: 15,
+    fontWeight: 'bold',
+    marginBottom: 3,
+  },
+  title: {
+    textAlign: 'center',
+    fontSize: 20,
+    color: '#181725',
+    fontWeight: 'bold',
+    marginTop: 35,
+    fontFamily: 'Gilroy-Bold',
+  },
+  lineImg: {
+    marginTop: 30,
+    marginBottom: 10,
+    width: '100%',
+  },
+  pImage: {
+    height: 120,
+    width: 50,
+    marginRight: 15,
+    resizeMode: 'contain',
+  },
+  allThings: {
+    flex: 1,
+    paddingHorizontal: 10,
+  },
+  itemPcs: {
+    fontFamily: 'Gilroy-Medium',
+    color: '#7C7C7C',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  quantity: {
+    fontSize: 19,
+    textAlign: 'center',
+    width: 35,
+  },
+  line: {
+    marginTop: 25,
+    width: 370,
+    marginHorizontal: 20,
   },
 });

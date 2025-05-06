@@ -17,6 +17,7 @@ import stars from '../images/stars.png';
 import {useDispatch, useSelector} from 'react-redux';
 import Toast from 'react-native-toast-message';
 import {addItem, favourite, removeFavourite} from '../app/cartSlice';
+import Button from '../component/Button';
 
 const ProductDetails = ({route}) => {
   const dispatch = useDispatch();
@@ -41,8 +42,6 @@ const ProductDetails = ({route}) => {
   };
 
   const handleAddToCart = product => {
-    const existingProduct = cartItems.find(item => item.id === product.id);
-
     const productWithQuantity = {
       ...product,
       quantity: localQuantity,
@@ -80,6 +79,7 @@ const ProductDetails = ({route}) => {
         <Image source={bg} />
         <Image source={product.image} style={styles.proimage} />
       </View>
+
       <View style={styles.titleImage}>
         <Text style={styles.productTitle}>{product.name}</Text>
         <TouchableOpacity onPress={toggleFavourite}>
@@ -89,6 +89,7 @@ const ProductDetails = ({route}) => {
           />
         </TouchableOpacity>
       </View>
+
       <Text style={styles.productsPcs}>{product.pcs}</Text>
 
       <View style={styles.plusMinus}>
@@ -109,20 +110,22 @@ const ProductDetails = ({route}) => {
       <View style={styles.lineBg}>
         <Image source={line} style={styles.line} />
       </View>
+
       <TouchableOpacity
         style={styles.proDetails}
         onPress={() => setShowDescription(prev => !prev)}>
         <Text style={styles.proDetailsOne}>Product Detail</Text>
         <Image
           source={showDescription ? downarrow : rightArrow}
-          style={styles.downArr}
+          style={[styles.rightArr, showDescription && styles.downArrowStyle]}
         />
       </TouchableOpacity>
+
       {showDescription && (
         <View style={styles.newDesc}>
           <Text style={styles.newstyle}>
-            Lorem, ipsum dolor sit amet consectetur adipisicing elit. Eum atque
-            numquam sequi possimus id natus voluptates recusandae aliquam ma.
+            Apples are nutritious. Apples may be good for weight loss. Apples
+            may be good for your heart. As part of a healthful and varied diet.
           </Text>
         </View>
       )}
@@ -130,24 +133,32 @@ const ProductDetails = ({route}) => {
       <View style={styles.lineBg}>
         <Image source={line} style={styles.line} />
       </View>
+
       <View style={styles.proDetailsNew}>
-        <Text style={styles.proDetailsN}>Nutritions</Text>
-        <Text style={styles.grams}>100gr</Text>
-        <Image source={rightArrow} style={styles.rightArr} />
+        <Text style={styles.proDetailsOne}>Nutritions</Text>
+        <View style={styles.rightContent}>
+          <Text style={styles.grams}>100gr</Text>
+          <Image source={rightArrow} style={styles.rightArr} />
+        </View>
       </View>
+
       <View style={styles.lineBg}>
         <Image source={line} style={styles.line} />
       </View>
+
       <View style={styles.proDetailsNewOne}>
-        <Text style={styles.proDetailsN}>Review</Text>
-        <Image source={stars} style={styles.startsReview} />
-        <Image source={rightArrow} style={styles.rightArr} />
+        <Text style={styles.proDetailsOne}>Review</Text>
+        <View style={styles.rightContent}>
+          <Image source={stars} style={styles.starsImg} />
+          <Image source={rightArrow} style={styles.rightArr} />
+        </View>
       </View>
-      <TouchableOpacity
-        style={styles.btnBg}
-        onPress={() => handleAddToCart(product)}>
-        <Text style={styles.btn}>Add To Basket</Text>
-      </TouchableOpacity>
+      <View style={styles.addtobasket}>
+        <Button
+          title="Add to Basket"
+          onPress={() => handleAddToCart(product)}
+        />
+      </View>
     </View>
   );
 };
@@ -159,9 +170,23 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'white',
   },
+  addtobasket: {
+    position: 'absolute',
+    marginVertical: 785,
+    marginHorizontal: 25,
+  },
+  starsImg: {
+    marginRight: 15,
+  },
   newstyle: {
     fontFamily: 'Gilroy-Medium',
     color: '#7C7C7C',
+    fontSize: 14,
+    lineHeight: 22,
+  },
+  downArrowStyle: {
+    width: 19,
+    height: 10,
   },
   counts: {
     borderRadius: 15,
@@ -179,12 +204,10 @@ const styles = StyleSheet.create({
   },
   proimage: {
     position: 'absolute',
-    height: 200,
-    width: 90,
     marginTop: 90,
-  },
-  newh: {
-    marginTop: 5,
+    resizeMode: 'contain',
+    height: 200,
+    width: 500,
   },
   productTitle: {
     fontFamily: 'Gilroy-Bold',
@@ -223,10 +246,8 @@ const styles = StyleSheet.create({
     fontFamily: 'Gilroy',
     fontWeight: '900',
     fontSize: 23,
-    marginLeft: 180,
-  },
-  roundImage: {
-    marginRight: 40,
+    marginLeft: 'auto',
+    marginRight: 20,
   },
   heartImg: {
     width: 24,
@@ -247,54 +268,51 @@ const styles = StyleSheet.create({
   proDetails: {
     marginTop: 10,
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginLeft: 30,
-    gap: 240,
+    paddingHorizontal: 30,
   },
   proDetailsOne: {
-    fontFamily: 'Gilroy',
+    fontFamily: 'Gilroy-Bold',
     fontWeight: '700',
     fontSize: 15,
-    marginTop:5,
+    color: '#181725',
   },
   newDesc: {
     marginTop: 10,
-    marginLeft: 30,
+    paddingHorizontal: 30,
   },
   proDetailsNew: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 28,
-    fontSize: 15,
-  },
-  proDetailsN: {
-    fontFamily: 'Gilroy',
-    fontWeight: '700',
-    position: 'absolute',
-    paddingLeft: 30,
-    fontSize: 15,
-  },
-  grams: {
-    position: 'absolute',
-    marginLeft: 310,
-    backgroundColor: '#EBEBEB',
-    borderRadius: 5,
-    height: 20,
-    width: 40,
-    fontSize: 12,
-    textAlign: 'center',
-  },
-  rightArr: {
-    position: 'absolute',
-    marginLeft: 360,
-    marginTop: 2,
-  },
-  startsReview: {
-    marginLeft: 250,
-    marginTop: 2,
+    paddingHorizontal: 30,
+    marginTop: 20,
   },
   proDetailsNewOne: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 30,
     marginTop: 10,
+  },
+  grams: {
+    backgroundColor: '#EBEBEB',
+    borderRadius: 5,
+    paddingHorizontal: 6,
+    fontSize: 12,
+    textAlign: 'center',
+    color: '#7C7C7C',
+    marginRight: 10,
+  },
+  rightArr: {
+    width: 12,
+    height: 15,
+    tintColor: '#181725',
+  },
+  rightContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   btnBg: {
     backgroundColor: '#53B175',
@@ -304,10 +322,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 30,
-    borderTopEndRadius: 20,
-    borderBottomEndRadius: 20,
-    borderBottomLeftRadius: 20,
-    borderTopLeftRadius: 20,
+    borderRadius: 20,
   },
   btn: {
     fontSize: 18,

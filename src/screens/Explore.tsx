@@ -286,12 +286,14 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   allImgs: {
-    marginLeft: 25,
-    marginTop: 5,
+    paddingHorizontal: 8,
+    marginVertical:6,
+    justifyContent: 'center',
   },
   all: {
     flexDirection: 'row',
     marginTop: 5,
+    paddingHorizontal:16,
   },
   oneBg: {
     height: 180,

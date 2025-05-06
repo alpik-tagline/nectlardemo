@@ -1,3 +1,4 @@
+import React, {useState} from 'react';
 import {
   Image,
   ImageBackground,
@@ -7,30 +8,21 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-
-import numbBg from '../images/numberbg.png';
-import React, {useState} from 'react';
-import carrotIcon from '../images/carrotRed.png';
 import {useNavigation} from '@react-navigation/native';
+import {Formik} from 'formik';
+import {loginValidationSchema} from '../utils/validations';
 import {login} from '../firebase/firebaseAuth';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import {Formik} from 'formik';
-import * as Yup from 'yup';
 import bottombg from '../images/bottombg.png';
-
-const validationSchema = Yup.object({
-  email: Yup.string()
-    .email('Invalid email format')
-    .required('Email is required'),
-  password: Yup.string()
-    .min(6, 'Password must be at least 6 characters')
-    .required('Password is required'),
-});
+import Button from '../component/Button';
+import numbBg from '../images/numberbg.png';
+import carrotIcon from '../images/carrotRed.png';
+import {Alert} from 'react-native';
 
 const Login = () => {
-  const [passwordVisible, setPasswordVisible] = useState(false);
   const navigation = useNavigation();
 
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const togglePasswordVisibility = () => {
     setPasswordVisible(!passwordVisible);
   };
@@ -41,6 +33,7 @@ const Login = () => {
       navigation.navigate('MainTabs');
     } catch (error) {
       console.log('Login failed:', error);
+      Alert.alert('Login Failed', 'Wrong Email id or Password');
     }
   };
 
@@ -56,7 +49,7 @@ const Login = () => {
 
       <Formik
         initialValues={{email: '', password: ''}}
-        validationSchema={validationSchema}
+        validationSchema={loginValidationSchema}
         onSubmit={handleLogin}>
         {({
           values,
@@ -103,11 +96,7 @@ const Login = () => {
               <Text style={styles.errorText}>{errors.password}</Text>
             )}
 
-            <Text style={styles.fpassword}>Forgot Password?</Text>
-
-            <TouchableOpacity style={styles.btnBg} onPress={handleSubmit}>
-              <Text style={styles.btn}>Log In</Text>
-            </TouchableOpacity>
+            <Button title="Log in" onPress={handleSubmit} />
           </>
         )}
       </Formik>
@@ -125,13 +114,7 @@ const Login = () => {
 export default Login;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: 'white',
-  },
-  stxt: {
-    color: '#53B175',
-  },
+  container: {flex: 1, backgroundColor: 'white'},
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -142,20 +125,17 @@ const styles = StyleSheet.create({
     paddingBottom: 5,
     width: 350,
   },
-  iconWrapper: {
-    paddingLeft: 10,
+  alltxts: {
+    marginLeft: 15,
   },
+  iconWrapper: {paddingLeft: 10},
   bgImages: {
     height: 250,
     alignItems: 'center',
     paddingTop: 100,
     marginBottom: 35,
   },
-  iconG: {
-    height: 60,
-    width: 50,
-    marginBottom: 20,
-  },
+  iconG: {height: 60, width: 50, marginBottom: 20},
   enterNumb: {
     fontWeight: '500',
     marginTop: 10,
@@ -196,14 +176,7 @@ const styles = StyleSheet.create({
     width: 350,
     marginLeft: 6,
   },
-  fpassword: {
-    fontFamily: 'Gilroy',
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginTop: 14,
-    marginLeft: 250,
-    color: 'black',
-  },
+  errorText: {color: 'red', fontSize: 12, marginLeft: 20, marginTop: 5},
   btnBg: {
     backgroundColor: '#53B175',
     marginTop: 30,
@@ -214,11 +187,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     borderRadius: 20,
   },
-  btn: {
-    fontSize: 18,
-    color: 'white',
-    fontWeight: '600',
-  },
+  btn: {fontSize: 18, color: 'white', fontWeight: '600'},
   txt: {
     alignSelf: 'center',
     marginTop: 15,
@@ -226,13 +195,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: 'black',
   },
-  alltxts: {
-    marginLeft: 20,
-  },
-  errorText: {
-    color: 'red',
-    fontSize: 12,
-    marginLeft: 20,
-    marginTop: 5,
-  },
+  stxt: {color: '#53B175'},
+  bbg: {height: 200},
 });

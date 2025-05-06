@@ -34,6 +34,8 @@ import {useDispatch, useSelector} from 'react-redux';
 import {useNavigation} from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 import {addItem} from '../app/cartSlice';
+import {useSharedValue} from 'react-native-reanimated';
+import Carousel from 'react-native-reanimated-carousel';
 
 const {width} = Dimensions.get('window');
 
@@ -104,11 +106,21 @@ const products = [
   },
 ];
 
+const bannerImages = [Banner, Banner, Banner];
+
+const renderBannerItem = ({item, index}) => (
+  <View key={index} style={{flex: 1}}>
+    <Image source={item} style={styles.bannerImgs} />
+  </View>
+);
+
 const Home = () => {
   const user = auth().currentUser;
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const [searchQuery, setSearchQuery] = useState('');
+  const cartItems = useSelector(state => state.cart.items);
+  const [activeIndex, setActiveIndex] = useState(0);
 
   const handleAddToCart = product => {
     const existingProduct = cartItems.find(item => item.id === product.id);
@@ -116,15 +128,14 @@ const Home = () => {
       ...product,
       quantity: existingProduct ? existingProduct.quantity + 1 : 1,
     };
-
     dispatch(addItem(updatedProduct));
     Toast.show({
       type: 'success',
       text1: `Item added to cart`,
+      text1Style: {fontSize: 15, fontWeight: 'bold'},
     });
   };
 
-  const cartItems = useSelector(state => state.cart.items);
   const ProductDetails = product => {
     navigation.navigate('ProductDetails', {product});
   };
@@ -145,7 +156,7 @@ const Home = () => {
         <Text style={styles.pcs}>{item.pcs}</Text>
       </TouchableOpacity>
       <View style={styles.priceAll}>
-        <Text style={styles.priceTxt}>$ {item.price}</Text>
+        <Text style={styles.priceTxt}>${item.price}</Text>
         <TouchableOpacity onPress={() => handleAddToCart(item)}>
           <Image source={plus} style={styles.plusIcon} />
         </TouchableOpacity>
@@ -170,72 +181,88 @@ const Home = () => {
           />
         </View>
 
-        <ScrollView
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}>
-          <View style={styles.emblaSlide}>
-            <Image source={Banner} style={styles.bannerImg} />
-          </View>
-          <View style={styles.emblaSlide}>
-            <Image source={Banner} style={styles.bannerImg} />
-          </View>
-        </ScrollView>
-
-        <View style={styles.offers}>
-          <Text style={styles.offerTxt}>Exclusive Offer</Text>
-          <Text style={styles.seeTxt}>See all</Text>
-        </View>
-
-        <FlatList
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          data={filteredProducts}
-          renderItem={renderProductItem}
-          keyExtractor={item => item.id.toString()}
-          contentContainerStyle={styles.productList}
+        <Carousel
+          loop
+          width={width}
+          height={100}
+          autoPlay
+          autoPlayInterval={3000}
+          data={bannerImages}
+          // scrollAnimationDuration={1000}
+          onSnapToItem={index => setActiveIndex(index)}
+          renderItem={renderBannerItem}
         />
-
-        <View style={styles.offers}>
-          <Text style={styles.offerTxtOne}>Best Selling</Text>
-          <Text style={styles.seeTxt}>See all</Text>
+        <View style={styles.dotsContainer}>
+          {bannerImages.map((_, index) => (
+            <View
+              key={index}
+              style={[styles.dot, {opacity: index === activeIndex ? 1 : 0.3}]}
+            />
+          ))}
         </View>
 
-        <FlatList
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          data={filteredProducts}
-          renderItem={renderProductItem}
-          keyExtractor={item => item.id.toString()}
-          contentContainerStyle={styles.productList}
-        />
-
-        <View style={styles.offers}>
-          <Text style={styles.offerTxtTwo}>Groceries</Text>
-          <Text style={styles.seeTxt}>See all</Text>
-        </View>
-
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <View style={styles.horizonView}>
-            <View style={styles.roundGro}>
-              <Image source={roundgood} style={styles.roundGood} />
-              <Text style={styles.newTxt}>Pulses</Text>
+        {filteredProducts.length === 0 ? (
+          <Text style={styles.noItemsText}>No item found</Text>
+        ) : (
+          <>
+            <View style={styles.offers}>
+              <Text style={styles.offerTxt}>Exclusive Offer</Text>
+              <Text style={styles.seeTxt}>See all</Text>
             </View>
-            <View style={styles.roundGreen}>
-              <Image source={rice} style={styles.roundGood} />
-              <Text style={styles.newTxt}>Rice</Text>
-            </View>
-          </View>
-        </ScrollView>
 
-        <FlatList
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          data={filteredProducts}
-          renderItem={renderProductItem}
-          keyExtractor={item => item.id.toString()}
-          contentContainerStyle={styles.productList}
-        />
+            <FlatList
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              data={filteredProducts}
+              renderItem={renderProductItem}
+              keyExtractor={item => item.id.toString()}
+              contentContainerStyle={styles.productList}
+            />
+
+            <View style={styles.offers}>
+              <Text style={styles.offerTxt}>Best Selling</Text>
+              <Text style={styles.seeTxt}>See all</Text>
+            </View>
+
+            <FlatList
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              data={filteredProducts}
+              renderItem={renderProductItem}
+              keyExtractor={item => item.id.toString()}
+              contentContainerStyle={styles.productList}
+            />
+
+            <View style={styles.offers}>
+              <Text style={styles.offerTxt}>Groceries</Text>
+              <Text style={styles.seeTxt}>See all</Text>
+            </View>
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View style={styles.horizonView}>
+                <View style={styles.roundGro}>
+                  <Image source={roundgood} style={styles.roundGood} />
+                  <Text style={styles.newTxt}>Pulses</Text>
+                </View>
+                <View style={styles.roundGreen}>
+                  <Image source={rice} style={styles.roundGood} />
+                  <Text style={styles.newTxt}>Rice</Text>
+                </View>
+              </View>
+            </ScrollView>
+
+            <View style={styles.lastP}>
+              <FlatList
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                data={filteredProducts}
+                renderItem={renderProductItem}
+                keyExtractor={item => item.id.toString()}
+                contentContainerStyle={styles.productList}
+              />
+            </View>
+          </>
+        )}
       </ScrollView>
     </View>
   );
@@ -245,7 +272,18 @@ export default Home;
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     backgroundColor: 'white',
+  },
+  bannerImgs: {
+    height: 100,
+    width: 380,
+    borderRadius: 20,
+    marginHorizontal: 20,
+    marginTop: 5,
+  },
+  lastP: {
+    marginBottom: 5,
   },
   carrotImg: {
     marginTop: 50,
@@ -261,10 +299,11 @@ const styles = StyleSheet.create({
   search: {
     marginTop: 15,
     backgroundColor: '#F2F3F2',
-    width: 340,
-    marginLeft: 33,
+    width: 375,
+    height: 50,
+    marginHorizontal: 20,
     marginBottom: 15,
-    borderRadius: 10,
+    borderRadius: 15,
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -277,46 +316,15 @@ const styles = StyleSheet.create({
     marginLeft: 13,
     marginRight: 10,
   },
-  embla: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emblaSlide: {
-    width: 410,
-    height: 90,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginHorizontal: 1,
-  },
-  bannerImg: {
-    width: 340,
-    borderRadius: 28,
-  },
   offers: {
     marginTop: 20,
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    marginHorizontal: 20,
+    justifyContent: 'space-between',
   },
   offerTxt: {
-    fontFamily: 'Gilroy',
     fontSize: 20,
     fontWeight: 'bold',
-    paddingRight: 180,
-  },
-  offerTxtOne: {
-    fontFamily: 'Gilroy',
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginRight: 30,
-    paddingRight: 180,
-  },
-  offerTxtTwo: {
-    fontFamily: 'Gilroy',
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginRight: 50,
     paddingRight: 180,
   },
   seeTxt: {
@@ -326,7 +334,7 @@ const styles = StyleSheet.create({
   horizonView: {
     flexDirection: 'row',
     marginTop: 18,
-    marginLeft: 25,
+    marginHorizontal: 20,
   },
   roundGood: {
     alignSelf: 'center',
@@ -337,7 +345,6 @@ const styles = StyleSheet.create({
   newTxt: {
     alignSelf: 'center',
     marginLeft: 15,
-    fontFamily: 'Gilroy',
     fontWeight: '700',
     fontSize: 18,
   },
@@ -357,7 +364,7 @@ const styles = StyleSheet.create({
     marginLeft: 15,
   },
   productList: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 19,
   },
   products: {
     marginTop: 20,
@@ -398,7 +405,29 @@ const styles = StyleSheet.create({
     marginLeft: 5,
   },
   priceTxt: {
-    fontWeight: 800,
+    fontWeight: '800',
     fontSize: 16,
+  },
+  noItemsText: {
+    textAlign: 'center',
+    paddingVertical: 200,
+    fontSize: 18,
+    fontWeight: '500',
+    color: '#999',
+  },
+  dotsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 287,
+    alignItems: 'center',
+    alignSelf: 'center',
+    position: 'absolute',
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#53B175',
+    marginHorizontal: 4,
   },
 });

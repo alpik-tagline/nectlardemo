@@ -50,7 +50,10 @@ const App = () => {
                 <Stack.Screen name="MainTabs" component={BottomTabNav} />
                 <Stack.Screen name="OrderCon" component={OrderAccept} />
                 <Stack.Screen name="Myorder" component={MyOrder} />
-                <Stack.Screen name="ProductDetails" component={ProductDetails} />
+                <Stack.Screen
+                  name="ProductDetails"
+                  component={ProductDetails}
+                />
                 <Stack.Screen name="Favourite" component={Favourite} />
                 <Stack.Screen name="Allinone" component={Allinone} />
                 <Stack.Screen name="Explore" component={Explore} />
@@ -63,7 +66,6 @@ const App = () => {
             )}
           </Stack.Navigator>
         </NavigationContainer>
-        {/* 👇 Add Toast here so it overlays all screens */}
         <Toast />
       </GestureHandlerRootView>
     </Provider>
